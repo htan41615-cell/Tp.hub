@@ -1,0 +1,327 @@
+Pcall(function()
+    local LP = game:GetService("Players").LocalPlayer
+    local UIS = game:GetService("UserInputService")
+    local TS = game:GetService("TweenService")
+    local PG = LP:WaitForChild("PlayerGui")
+    
+    if PG:FindFirstChild("XVCTP") then PG.XVCTP:Destroy() end
+    
+    local Gui = Instance.new("ScreenGui")
+    Gui.Name = "XVCTP"
+    Gui.ResetOnSpawn = false
+    Gui.Parent = PG
+    
+    local waypoints = {}
+    local wpCount = 0
+    local useTween = true
+    
+    -- Nút bật/tắt (📍)
+    local Tgl = Instance.new("TextButton")
+    Tgl.Size = UDim2.new(0, 50, 0, 50)
+    Tgl.Position = UDim2.new(0.05, 0, 0.15, 0)
+    Tgl.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Tgl.Text = "📍"
+    Tgl.TextSize = 22
+    Tgl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Tgl.Parent = Gui
+    
+    local TglC = Instance.new("UICorner")
+    TglC.CornerRadius = UDim.new(0, 25)
+    TglC.Parent = Tgl
+    
+    -- Kéo thả nút 📍
+    local dragT, dInT, dStartT, sPosT
+    Tgl.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragT = true dStartT = i.Position sPosT = Tgl.Position
+        end
+    end)
+    Tgl.InputChanged:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement then dInT = i end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if i == dInT and dragT then
+            local delta = i.Position - dStartT
+            Tgl.Position = UDim2.new(sPosT.X.Scale, sPosT.X.Offset + delta.X, sPosT.Y.Scale, sPosT.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then dragT = false end
+    end)
+    
+    -- Khung Menu chính
+    local Main = Instance.new("Frame")
+    Main.Size = UDim2.new(0, 280, 0, 320)
+    Main.Position = UDim2.new(0.5, -140, 0.5, -160)
+    Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Main.Visible = false
+    Main.ClipsDescendants = true
+    Main.Parent = Gui
+    
+    local MainC = Instance.new("UICorner")
+    MainC.CornerRadius = UDim.new(0, 8)
+    MainC.Parent = Main
+    
+    -- Thanh Tiêu Đề
+    local Bar = Instance.new("Frame")
+    Bar.Size = UDim2.new(1, 0, 0, 40)
+    Bar.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+    Bar.Parent = Main
+    
+    local BarC = Instance.new("UICorner")
+    BarC.CornerRadius = UDim.new(0, 8)
+    BarC.Parent = Bar
+    
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, -50, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "MENU DỊCH CHUYỂN"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 14
+    Title.Font = Enum.Font.SourceSansBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Bar
+    
+    -- Kéo thả Menu
+    local dragM, dInM, dStartM, sPosM
+    Bar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragM = true dStartM = i.Position sPosM = Main.Position
+        end
+    end)
+    Bar.InputChanged:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement then dInM = i end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if i == dInM and dragM then
+            local delta = i.Position - dStartM
+            Main.Position = UDim2.new(sPosM.X.Scale, sPosM.X.Offset + delta.X, sPosM.Y.Scale, sPosM.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then dragM = false end
+    end)
+    
+    -- Nút Cài Đặt (⚙️)
+    local SetBtn = Instance.new("TextButton")
+    SetBtn.Size = UDim2.new(0, 30, 0, 30)
+    SetBtn.Position = UDim2.new(1, -40, 0, 5)
+    SetBtn.BackgroundTransparency = 1
+    SetBtn.Text = "⚙️"
+    SetBtn.TextSize = 18
+    SetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SetBtn.Parent = Bar
+    
+    local Content = Instance.new("Frame")
+    Content.Size = UDim2.new(1, 0, 1, -40)
+    Content.Position = UDim2.new(0, 0, 0, 40)
+    Content.BackgroundTransparency = 1
+    Content.Parent = Main
+    
+    -- Khung Giao Diện Cài Đặt
+    local SetFrame = Instance.new("Frame")
+    SetFrame.Size = UDim2.new(1, 0, 1, 0)
+    SetFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    SetFrame.Visible = false
+    SetFrame.ZIndex = 5
+    SetFrame.Parent = Content
+    
+    local function CreateBtn(text, color, pos, sizeX, parent)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, sizeX, 0, 35)
+        b.Position = pos
+        b.BackgroundColor3 = color
+        b.Text = text
+        b.TextColor3 = Color3.fromRGB(255, 255, 255)
+        b.Font = Enum.Font.SourceSansBold
+        b.TextSize = 14
+        b.Parent = parent
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, 6)
+        c.Parent = b
+        return b
+    end
+    
+    local SaveBtn = CreateBtn("Lưu Vị Trí", Color3.fromRGB(46, 204, 113), UDim2.new(0, 10, 0, 10), 125, Content)
+    local ClearAllBtn = CreateBtn("Xóa Hết", Color3.fromRGB(231, 76, 60), UDim2.new(1, -135, 0, 10), 125, Content)
+    
+    local function CreateRow(text, pos, parent)
+        local f = Instance.new("Frame")
+        f.Size = UDim2.new(1, -20, 0, 40)
+        f.Position = UDim2.new(0, 10, 0, pos)
+        f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        f.Parent = parent
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, 6)
+        c.Parent = f
+        local l = Instance.new("TextLabel")
+        l.Size = UDim2.new(0, 110, 1, 0)
+        l.Position = UDim2.new(0, 10, 0, 0)
+        l.BackgroundTransparency = 1
+        l.Text = text
+        l.TextColor3 = Color3.fromRGB(200, 200, 200)
+        l.TextSize = 14
+        l.Font = Enum.Font.SourceSansBold
+        l.TextXAlignment = Enum.TextXAlignment.Left
+        l.Parent = f
+        return f, l
+    end
+    
+    -- Cuộn danh sách vị trí chính
+    local Scroll = Instance.new("ScrollingFrame")
+    Scroll.Size = UDim2.new(1, -20, 1, -65)
+    Scroll.Position = UDim2.new(0, 10, 0, 55)
+    Scroll.BackgroundTransparency = 1
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Scroll.ScrollBarThickness = 4
+    Scroll.Parent = Content
+    
+    local List = Instance.new("UIListLayout")
+    List.Parent = Scroll
+    List.Padding = UDim.new(0, 6)
+    List:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        Scroll.CanvasSize = UDim2.new(0, 0, 0, List.AbsoluteContentSize.Y + 5)
+    end)
+    
+    -- Cuộn danh sách trong Cài đặt
+    local SetScroll = Instance.new("ScrollingFrame")
+    SetScroll.Size = UDim2.new(1, -20, 1, -150)
+    SetScroll.Position = UDim2.new(0, 10, 0, 140)
+    SetScroll.BackgroundTransparency = 1
+    SetScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    SetScroll.ScrollBarThickness = 4
+    SetScroll.ZIndex = 6
+    SetScroll.Parent = SetFrame
+    
+    local SetList = Instance.new("UIListLayout")
+    SetList.Parent = SetScroll
+    SetList.Padding = UDim.new(0, 6)
+    SetList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        SetScroll.CanvasSize = UDim2.new(0, 0, 0, SetList.AbsoluteContentSize.Y + 5)
+    end)
+    
+    local SizeRow, SizeL = CreateRow("Kích Cỡ: Vừa", 10, SetFrame)
+    local SizeBtn = Instance.new("TextButton")
+    SizeBtn.Size = UDim2.new(1, 0, 1, 0) SizeBtn.BackgroundTransparency = 1 SizeBtn.Text = "" SizeBtn.ZIndex = 6 SizeBtn.Parent = SizeRow
+    
+    local EffectRow, EffectL = CreateRow("Hiệu Ứng Bật/Tắt: Bật", 55, SetFrame)
+    local EffectBtn = Instance.new("TextButton")
+    EffectBtn.Size = UDim2.new(1, 0, 1, 0) EffectBtn.BackgroundTransparency = 1 EffectBtn.Text = "" EffectBtn.ZIndex = 6 EffectBtn.Parent = EffectRow
+    
+    local DelTitleRow, DelTitleL = CreateRow("🗑️ DANH SÁCH XÓA VỊ TRÍ", 100, SetFrame)
+    DelTitleRow.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+    DelTitleL.TextColor3 = Color3.fromRGB(255, 100, 100)
+    SizeL.ZIndex = 6 EffectL.ZIndex = 6 DelTitleL.ZIndex = 6
+    
+    -- Xử lý Tệp Lưu Trữ
+    local file = tostring(game.PlaceId) .. "_v2.txt"
+    local function save()
+        local t = {} 
+        for id, cf in pairs(waypoints) do 
+            t[tostring(id)] = {cf.X, cf.Y, cf.Z} 
+        end
+        if writefile then 
+            writefile(file, game:GetService("HttpService"):JSONEncode(t)) 
+        end
+    end
+    
+    local uiRows = {}
+    local function addWpUI(id, cf)
+        local r, l = CreateRow("Điểm: " .. id, 0, Scroll)
+        local tele = Instance.new("TextButton")
+        tele.Size = UDim2.new(0, 115, 0, 25) tele.Position = UDim2.new(1, -125, 0, 7.5) tele.BackgroundColor3 = Color3.fromRGB(52, 152, 219) tele.Text = "Đến" tele.TextColor3 = Color3.fromRGB(255, 255, 255) tele.Font = Enum.Font.SourceSansBold tele.TextSize = 14 tele.ZIndex = 3 tele.Parent = r
+        
+        local rD, lD = CreateRow("Điểm: " .. id, 0, SetScroll) rD.ZIndex = 6 lD.ZIndex = 6
+        local del = Instance.new("TextButton")
+        del.Size = UDim2.new(0, 50, 0, 25) del.Position = UDim2.new(1, -60, 0, 7.5) del.BackgroundColor3 = Color3.fromRGB(231, 76, 60) del.Text = "Xóa" del.TextColor3 = Color3.fromRGB(255, 255, 255) del.Font = Enum.Font.SourceSansBold del.ZIndex = 7 del.Parent = rD
+        
+        uiRows[id] = {MainRow = r, SetRow = rD}
+        
+        tele.MouseButton1Click:Connect(function() 
+            if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then 
+                LP.Character.HumanoidRootPart.CFrame = waypoints[id] 
+            end 
+        end)
+        
+        del.MouseButton1Click:Connect(function() 
+            if uiRows[id] then 
+                uiRows[id].MainRow:Destroy() 
+                uiRows[id].SetRow:Destroy() 
+                uiRows[id] = nil 
+            end 
+            waypoints[id] = nil 
+            save() 
+        end)
+    end
+    
+    -- TẢI FILE DỮ LIỆU ĐÃ LƯU
+    if readfile and pcall(function() return readfile(file) end) then
+        local success, data = pcall(function() return game:GetService("HttpService"):JSONDecode(readfile(file)) end)
+        if success and type(data) == "table" then
+            for id, pos in pairs(data) do
+                local nid = tonumber(id) 
+                if nid and pos[1] and pos[2] and pos[3] then
+                    local cf = CFrame.new(pos[1], pos[2], pos[3])
+                    waypoints[nid] = cf 
+                    if nid > wpCount then wpCount = nid end 
+                    addWpUI(nid, cf)
+                end
+            end
+        end
+    end
+    
+    SaveBtn.MouseButton1Click:Connect(function()
+        if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+            wpCount = wpCount + 1 
+            local cf = LP.Character.HumanoidRootPart.CFrame 
+            waypoints[wpCount] = cf 
+            addWpUI(wpCount, cf) 
+            save()
+        end
+    end)
+    
+    ClearAllBtn.MouseButton1Click:Connect(function()
+        for _, child in ipairs(Scroll:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+        for _, child in ipairs(SetScroll:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+        waypoints = {} wpCount = 0 uiRows = {} save()
+    end)
+    
+    SetBtn.MouseButton1Click:Connect(function() SetFrame.Visible = not SetFrame.Visible end)
+    
+    local sizes = {UDim2.new(0, 240, 0, 260), UDim2.new(0, 280, 0, 320), UDim2.new(0, 320, 0, 380)}
+    local sizeNames = {"Nhỏ", "Vừa", "Lớn"} 
+    local cSize = 2
+    
+    SizeBtn.MouseButton1Click:Connect(function()
+        cSize = cSize % 3 + 1 
+        Main.Size = sizes[cSize] 
+        SizeL.Text = "Kích Cỡ: " .. sizeNames[cSize]
+    end)
+    
+    EffectBtn.MouseButton1Click:Connect(function()
+        useTween = not useTween 
+        if useTween then EffectL.Text = "Hiệu Ứng Bật/Tắt: Bật" else EffectL.Text = "Hiệu Ứng Bật/Tắt: Tắt" end
+    end)
+    
+    Tgl.MouseButton1Click:Connect(function()
+        if Main.Visible then
+            if useTween then
+                local t = TS:Create(Main, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 0, 0)}) 
+                t:Play() 
+                t.Completed:Connect(function() Main.Visible = false Main.Size = sizes[cSize] end)
+            else 
+                Main.Visible = false 
+            end
+        else
+            if useTween then
+                Main.Size = UDim2.new(0, 0, 0, 0) 
+                Main.Visible = true 
+                TS:Create(Main, TweenInfo.new(0.2), {Size = sizes[cSize]}):Play()
+            else 
+                Main.Size = sizes[cSize] 
+                Main.Visible = true 
+            end
+        end
+    end)
+end)
