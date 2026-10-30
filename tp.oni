@@ -1,4 +1,4 @@
-Pcall(function()
+pcall(function()
     local LP = game:GetService("Players").LocalPlayer
     local UIS = game:GetService("UserInputService")
     local TS = game:GetService("TweenService")
